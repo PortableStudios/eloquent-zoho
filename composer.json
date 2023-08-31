@@ -1,0 +1,17 @@
+{
+    "name": "portable/eloquent-zoho",
+    "description": "A rudimentary Eloquent driver for Zoho Analytics",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Portable\\EloquentZoho\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Kath Young",
+            "email": "kath.young@portable.com.au"
+        }
+    ],
+    "require": {}
+}
