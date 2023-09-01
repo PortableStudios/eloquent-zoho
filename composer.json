@@ -24,7 +24,6 @@
         "laravel/pint": "^1.12",
         "squizlabs/php_codesniffer": "^3.7",
         "nunomaduro/larastan": "^2.6",
-        "archtechx/enums": "^0.3.2",
         "orchestra/testbench": "^8.10"
     }
 }
