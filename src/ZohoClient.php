@@ -7,6 +7,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Portable\EloquentZoho\Events\ZohoCallCompleted;
+use Portable\EloquentZoho\Exceptions\NotConnectedException;
 
 class ZohoClient
 {
@@ -15,9 +16,10 @@ class ZohoClient
     public function __construct(
         protected string $apiUrl,
         protected string $apiEmail,
-        protected string $authToken,
-        protected string $workspaceName
+        protected string $workspaceName,
+        protected ?string $authToken = null,
     ) {
+        //
     }
 
     /**
@@ -30,6 +32,11 @@ class ZohoClient
         return $this->apiUrl
             && $this->apiEmail
             && $this->authToken;
+    }
+
+    public function setAuthToken(?string $token): void
+    {
+        $this->authToken = $token;
     }
 
     /**
@@ -53,16 +60,11 @@ class ZohoClient
         );
 
         if ($response->successful()) {
-            $matches = [];
-            preg_match('#AUTHTOKEN=([a-f0-9]+)\b#', $response->body(), $matches);
-            if (isset($matches[1])) {
+            if (preg_match('#AUTHTOKEN=([a-f0-9]+)\b#', $response->body(), $matches)) {
                 return $matches[1];
-            } else {
-                return null;
             }
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**
@@ -84,8 +86,7 @@ class ZohoClient
     public function post(string $url, ?array $data = []): ?Response
     {
         if (! $this->connected()) {
-            throw new \Exception('Cannot connect to Zoho Analytics with current configuration.'
-                . '  Check URL and credentials.');
+            throw new NotConnectedException();
         }
 
         $data = array_merge($data, [
@@ -144,8 +145,7 @@ class ZohoClient
         bool $isTransaction = false
     ): ?Response {
         if (! $this->connected()) {
-            throw new \Exception('Cannot connect to Zoho Analytics with current configuration.'
-                . ' Check URL and credentials.');
+            throw new NotConnectedException();
         }
 
         $postData = [
