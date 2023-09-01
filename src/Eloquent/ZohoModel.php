@@ -2,19 +2,20 @@
 
 namespace Portable\EloquentZoho\Eloquent;
 
-use Portable\EloquentZoho\Casts\ZohoInteger;
-use Illuminate\Database\Eloquent\Model;
-use Portable\EloquentZoho\Eloquent\Query\Builder as QueryBuilder;
-use Portable\EloquentZoho\Eloquent\Builder;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
+use Portable\EloquentZoho\Casts\ZohoInteger;
+use Portable\EloquentZoho\Eloquent\Query\Builder as QueryBuilder;
 
 abstract class ZohoModel extends Model
 {
     protected $connection = 'zoho';
+
     protected static $unguarded = true;
+
     public $incrementing = false;
 
     abstract public static function arrayFromLocal(Model $local);
@@ -26,7 +27,7 @@ abstract class ZohoModel extends Model
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function newEloquentBuilder($query)
     {
@@ -34,7 +35,7 @@ abstract class ZohoModel extends Model
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function newBaseQueryBuilder()
     {
@@ -43,7 +44,7 @@ abstract class ZohoModel extends Model
         return new QueryBuilder($connection, $connection->getQueryGrammar(), $connection->getPostProcessor());
     }
 
-        /**
+    /**
      * Get the current connection name for the model.
      *
      * @return string|null
@@ -53,7 +54,7 @@ abstract class ZohoModel extends Model
         return $this->connection ?? config('zoho.connection', 'zoho');
     }
 
-        /**
+    /**
      * Create a new model instance that is existing.
      *
      * @param  array  $attributes
@@ -70,8 +71,6 @@ abstract class ZohoModel extends Model
 
         return $model;
     }
-
-
 
     /**
      * Return a timestamp as DateTime object.

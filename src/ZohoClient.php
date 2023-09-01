@@ -24,8 +24,6 @@ class ZohoClient
      * Determine if the service can be connected.
      * Since this simply relies on a handful of configuration values, we'll assume that connection is possible
      * if the configuration is set.
-     *
-     * @return bool
      */
     public function connected(): bool
     {
@@ -38,19 +36,18 @@ class ZohoClient
      * Generates the authentication token to be used in subsequent requests to the API.
      *
      * The Auth API is a separate from the Data API.
-     *
      */
-    public function generateAuthToken(string $userEmail, string $userPassword): string|null
+    public function generateAuthToken(string $userEmail, string $userPassword): ?string
     {
         if (! $this->apiUrl || $this->apiEmail) {
-            throw new Exception("Cannot connect to Zoho Analytics with current configuration. Check URL and credentials.");
+            throw new Exception('Cannot connect to Zoho Analytics with current configuration. Check URL and credentials.');
         }
 
         $response = Http::get(
-            $this->apiUrl . '/iam/apiauthtoken/nb/create?SCOPE=ZROP/reportsapi',
+            $this->apiUrl.'/iam/apiauthtoken/nb/create?SCOPE=ZROP/reportsapi',
             [
                 'EMAIL_ID' => $userEmail,
-                'PASSWORD' => $userPassword
+                'PASSWORD' => $userPassword,
             ]
         );
 
@@ -67,14 +64,10 @@ class ZohoClient
         }
     }
 
-
     /**
      * Deals with logging errors and other information after making a Data API request.
-     *
-     * @param Response $response
-     * @return Response|null
      */
-    public function handleResponse(Response $response): Response|null
+    public function handleResponse(Response $response): ?Response
     {
         ZohoCallCompleted::dispatch($response);
 
@@ -84,21 +77,20 @@ class ZohoClient
     /**
      * Sends POST requests to the Data API.
      *
-     * @param string $url The endpoint for the request at the configured base URL ('zoho.api_url')
-     * @param array|null $data The data being sent (default is [])
-     * @return Response|null
+     * @param  string  $url The endpoint for the request at the configured base URL ('zoho.api_url')
+     * @param  array|null  $data The data being sent (default is [])
      */
-    public function post(string $url, ?array $data = []): Response|null
+    public function post(string $url, ?array $data = []): ?Response
     {
         if (! $this->connected()) {
-            throw new \Exception("Cannot connect to Zoho Analytics with current configuration. Check URL and credentials.");
+            throw new \Exception('Cannot connect to Zoho Analytics with current configuration. Check URL and credentials.');
         }
 
         $data = array_merge($data, [
             'ZOHO_API_VERSION' => '1.0',
             'ZOHO_OUTPUT_FORMAT' => 'JSON',
-            'ZOHO_ERROR_FORMAT'=>'JSON',
-            'authtoken' => $this->authToken
+            'ZOHO_ERROR_FORMAT' => 'JSON',
+            'authtoken' => $this->authToken,
         ]);
 
         return $this->handleResponse(Http::asForm()->post(
@@ -110,10 +102,10 @@ class ZohoClient
     protected function buildUrl(string $url): string
     {
         $fullUrl = $this->apiUrl
-        . '/api'
-        . '/' . $this->apiEmail
-        . '/' . $this->workspaceName;
-        $fullUrl .= substr($url, 0, 1) == '/' ? $url : '/' . $url;
+        .'/api'
+        .'/'.$this->apiEmail
+        .'/'.$this->workspaceName;
+        $fullUrl .= substr($url, 0, 1) == '/' ? $url : '/'.$url;
 
         return $fullUrl;
     }
@@ -124,7 +116,7 @@ class ZohoClient
         $data = $result->body();
         $json = json_decode($data);
 
-        if (!$result->successful()) {
+        if (! $result->successful()) {
             throw new \Exception($json->response->error->message);
         }
 
@@ -133,27 +125,19 @@ class ZohoClient
 
     /**
      * Imports an array of data into the Zoho Analytics table provided in the url.
-     *
-     * @param string $url
-     * @param array $data
-     * @return Response|null
      */
-    public function import(string $url, array $data, bool $isTransaction = false): Response|null
+    public function import(string $url, array $data, bool $isTransaction = false): ?Response
     {
         return $this->importAction($url, $data, 'APPEND', [], $isTransaction);
     }
 
     /**
      * Imports an array of data into the Zoho Analytics table provided in the url.
-     *
-     * @param string $url
-     * @param array $data
-     * @return Response|null
      */
-    protected function importAction(string $url, array $data, string $action, array $keys = [], bool $isTransaction = false): Response|null
+    protected function importAction(string $url, array $data, string $action, array $keys = [], bool $isTransaction = false): ?Response
     {
         if (! $this->connected()) {
-            throw new \Exception("Cannot connect to Zoho Analytics with current configuration. Check URL and credentials.");
+            throw new \Exception('Cannot connect to Zoho Analytics with current configuration. Check URL and credentials.');
         }
 
         $postData = [
@@ -168,20 +152,20 @@ class ZohoClient
 
         $response = $this->handleResponse(
             Http::attach('ZOHO_FILE', json_encode($data), 'file')
-            ->asMultipart()
-            ->post(
-                $this->buildUrl($url)
-                    . '?ZOHO_ACTION=IMPORT'             // the documentation is misleading, and these still need to be
-                    . '&ZOHO_API_VERSION=1.0'           // query parameters and not part of the post body
-                    . '&ZOHO_OUTPUT_FORMAT=JSON'
-                    . '&ZOHO_ERROR_FORMAT=JSON'
-                    . '&authtoken=' . $this->authToken,
-                $postData,
-            )
+                ->asMultipart()
+                ->post(
+                    $this->buildUrl($url)
+                        .'?ZOHO_ACTION=IMPORT'             // the documentation is misleading, and these still need to be
+                        .'&ZOHO_API_VERSION=1.0'           // query parameters and not part of the post body
+                        .'&ZOHO_OUTPUT_FORMAT=JSON'
+                        .'&ZOHO_ERROR_FORMAT=JSON'
+                        .'&authtoken='.$this->authToken,
+                    $postData,
+                )
         );
 
         if (is_null($response)) {
-            Log::error("Zoho Analytics returned null");
+            Log::error('Zoho Analytics returned null');
         }
 
         return $response;
@@ -190,12 +174,12 @@ class ZohoClient
     /**
      * Retrieves the data from a given table
      */
-    public function exportTable(string $tableName, string|null $query = null): array
+    public function exportTable(string $tableName, string $query = null): array
     {
-        $response = $this->post($tableName . '?ZOHO_ACTION=export', [
+        $response = $this->post($tableName.'?ZOHO_ACTION=export', [
             'ZOHO_SHOW_HIDDENCOLS' => 'true',
             'ZOHO_DATE_FORMAT' => self::DATE_FORMAT,
-            'ZOHO_CRITERIA' => $query
+            'ZOHO_CRITERIA' => $query,
         ]);
 
         $data = $response->body();
@@ -204,17 +188,16 @@ class ZohoClient
         $data = str_replace("\\'", "'", $data);
         $json = json_decode($data, true);
 
-
         if (! $response->successful()) {
             $message = '';
-            if (!$json) {
+            if (! $json) {
                 if (preg_match("/message\"\:(\"[^\n].+)/", $data, $matches)) {
                     $message = $matches[1];
                 }
             } else {
                 $message = $json['response']['error']['message'];
             }
-            throw new Exception("Error Processing Request: " . $message, 1);
+            throw new Exception('Error Processing Request: '.$message, 1);
         }
 
         return $json ?? [];
@@ -222,9 +205,9 @@ class ZohoClient
 
     public function deleteTableRow(string $tableName, string $where): Response
     {
-        $response = $this->post($tableName . '?ZOHO_ACTION=DELETE', [
+        $response = $this->post($tableName.'?ZOHO_ACTION=DELETE', [
             'ZOHO_DATE_FORMAT' => self::DATE_FORMAT,
-            'ZOHO_CRITERIA' => $where
+            'ZOHO_CRITERIA' => $where,
         ]);
 
         return $response;
@@ -244,7 +227,7 @@ class ZohoClient
         $data = array_merge($data, [
             'ZOHO_DATE_FORMAT' => self::DATE_FORMAT,
         ]);
-        $response = $this->post($tableName . '?ZOHO_ACTION=ADDROW', $data);
+        $response = $this->post($tableName.'?ZOHO_ACTION=ADDROW', $data);
 
         return $response;
     }
@@ -262,9 +245,9 @@ class ZohoClient
 
         $data = array_merge($data, [
             'ZOHO_DATE_FORMAT' => self::DATE_FORMAT,
-            'ZOHO_CRITERIA' => $where
+            'ZOHO_CRITERIA' => $where,
         ]);
-        $response = $this->post($tableName . '?ZOHO_ACTION=UPDATE', $data);
+        $response = $this->post($tableName.'?ZOHO_ACTION=UPDATE', $data);
 
         return $response;
     }
@@ -273,7 +256,7 @@ class ZohoClient
     {
         $response = $this->post('', [
             'ZOHO_ACTION' => 'CREATETABLE',
-            'ZOHO_TABLE_DESIGN' => json_encode($tableDefinition)
+            'ZOHO_TABLE_DESIGN' => json_encode($tableDefinition),
         ]);
 
         return $response;
@@ -281,7 +264,7 @@ class ZohoClient
 
     public function deleteTable(string $tableName)
     {
-        $response = $this->post('', ['ZOHO_ACTION'=>'DELETEVIEW','ZOHO_VIEW'=>$tableName]);
+        $response = $this->post('', ['ZOHO_ACTION' => 'DELETEVIEW', 'ZOHO_VIEW' => $tableName]);
 
         return $response;
     }

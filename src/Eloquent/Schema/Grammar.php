@@ -10,14 +10,15 @@ class Grammar extends BaseGrammar
     {
         $columns = [];
         foreach ($blueprint->getColumns() as $column) {
-            $columns[] =[
+            $columns[] = [
                 'COLUMNNAME' => $column->name,
                 'MANDATORY' => $column->nullable ? 'No' : 'Yes',
                 'DEFAULT' => $column->default,
                 'DESCRIPTION' => $column->comment,
-                "DATATYPE" => $this->typeString($blueprint, $column)
+                'DATATYPE' => $this->typeString($blueprint, $column),
             ];
         }
+
         return $columns;
     }
 
@@ -27,7 +28,7 @@ class Grammar extends BaseGrammar
             return 'AUTO_NUMBER';
         }
 
-        switch($column->type) {
+        switch ($column->type) {
             case 'bigInteger':
                 return 'NUMBER';
             case 'email':

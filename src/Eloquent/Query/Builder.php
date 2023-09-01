@@ -16,8 +16,6 @@ class Builder extends BaseBuilder
     /**
      * Insert or update a record matching the attributes, and fill it with values.
      *
-     * @param  array  $attributes
-     * @param  array  $values
      * @return bool
      */
     public function updateOrInsert(array $attributes, array $values = [])
@@ -36,7 +34,6 @@ class Builder extends BaseBuilder
     /**
      * Insert new records or update the existing ones.
      *
-     * @param  array  $values
      * @param  array|string  $uniqueBy
      * @param  array|null  $update
      * @return int
@@ -53,7 +50,6 @@ class Builder extends BaseBuilder
     /**
      * Update records in the database.
      *
-     * @param  array  $values
      * @return int
      */
     public function update(array $values)
@@ -81,7 +77,7 @@ class Builder extends BaseBuilder
             $this->grammar->compileWheres($this)
         );
 
-        if (!$this->aggregate) {
+        if (! $this->aggregate) {
             return $results;
         }
 
@@ -96,7 +92,7 @@ class Builder extends BaseBuilder
             'avg' => array_sum(array_column($results, $column)) / count($results),
             'min' => min(array_column($results, $column)),
             'max' => max(array_column($results, $column)),
-            default => throw new \Exception('Unsupported aggregate function: ' . $function),
+            default => throw new \Exception('Unsupported aggregate function: '.$function),
         };
 
         return $results;

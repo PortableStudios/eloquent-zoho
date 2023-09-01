@@ -14,7 +14,7 @@ class Builder extends \Illuminate\Database\Schema\Builder
     protected $connection;
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function hasTable($table)
     {

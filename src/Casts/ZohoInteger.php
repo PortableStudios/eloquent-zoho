@@ -15,6 +15,6 @@ class ZohoInteger implements CastsInboundAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        return (int) Str::replace(",", "", $value);
+        return (int) Str::replace(',', '', $value);
     }
 }

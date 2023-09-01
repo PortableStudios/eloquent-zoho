@@ -2,25 +2,26 @@
 
 namespace Portable\EloquentZoho\Eloquent;
 
+use Illuminate\Database\Connection as DatabaseConnection;
+use Illuminate\Support\Str;
 use Portable\EloquentZoho\Eloquent\Query\Builder;
 use Portable\EloquentZoho\Eloquent\Query\Grammar;
 use Portable\EloquentZoho\ZohoClient;
-use Illuminate\Database\Connection as DatabaseConnection;
-use Illuminate\Support\Str;
 
 class Connection extends DatabaseConnection
 {
     /**
-    * @var ZohoClient
-    */
+     * @var ZohoClient
+     */
     protected $connection;
+
     protected $folderName;
 
     public function __construct(protected array $zohoConfig)
     {
         $requiredKeys = ['api_url', 'api_email', 'auth_token', 'workspace_name', 'folder_name'];
         foreach ($requiredKeys as $key) {
-            if (!isset($zohoConfig[$key])) {
+            if (! isset($zohoConfig[$key])) {
                 throw new \Exception("Missing required key '$key' in zoho config");
             }
         }
@@ -68,7 +69,7 @@ class Connection extends DatabaseConnection
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function getSchemaBuilder()
     {
@@ -79,11 +80,12 @@ class Connection extends DatabaseConnection
     {
         try {
             $this->connection->exportTable($table, 'badcolumnname = 1');
+
             // If for some insane reason, the table exists and has a column called badcolumname
             // then we'll get a successful response and we know the table exists
             return true;
-        } catch(\Exception $e) {
-            if (Str::match("/View (.+) is not present/", $e->getMessage())==$table) {
+        } catch (\Exception $e) {
+            if (Str::match('/View (.+) is not present/', $e->getMessage()) == $table) {
                 return false;
             } elseif (Str::contains($e->getMessage(), "Unknown column 'badcolumnname'")) {
                 return true;
@@ -108,9 +110,9 @@ class Connection extends DatabaseConnection
     {
         $result = $this->connection->addTableRow($toTable, $data);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
-        if (!$result->successful()) {
+        if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
-            throw new \Exception('Zoho insert failed: ' . $msg);
+            throw new \Exception('Zoho insert failed: '.$msg);
         }
 
         return count($json['response']['result']['rows']);
@@ -120,9 +122,9 @@ class Connection extends DatabaseConnection
     {
         $result = $this->connection->updateTableRow($fromTable, $data, $where);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
-        if (!$result->successful()) {
+        if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
-            throw new \Exception('Zoho insert failed: ' . $msg);
+            throw new \Exception('Zoho insert failed: '.$msg);
         }
 
         return $json['response']['result']['updatedRows'];
@@ -130,9 +132,10 @@ class Connection extends DatabaseConnection
 
     public function zohoUpsert(string $toTable, array $data, array|string $key): int
     {
-        if (!is_array($key)) {
+        if (! is_array($key)) {
             $key = [$key];
         }
+
         return $this->connection->importUpsert($toTable, $data, $key);
     }
 
@@ -142,13 +145,13 @@ class Connection extends DatabaseConnection
         // escaping is inconsistent depending on operation.  For example,
         // exporting data requires 5 backslashes to escape, but deleting only requires 2.
         // I have no idea why, but this is what works.
-        $where = str_replace("\\\\\\\\\\", "\\\\", $where);
+        $where = str_replace('\\\\\\\\\\', '\\\\', $where);
 
         $result = $this->connection->deleteTableRow($fromTable, $where);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
-        if (!$result->successful()) {
+        if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
-            throw new \Exception('Zoho delete failed: ' . $msg);
+            throw new \Exception('Zoho delete failed: '.$msg);
         }
 
         return $json['response']['result']['deletedrows'];

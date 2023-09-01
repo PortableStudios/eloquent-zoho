@@ -13,12 +13,14 @@
             "email": "kath.young@portable.com.au"
         }
     ],
-    "require": {},
     "extra": {
         "laravel": {
                 "providers": [
                         "Portable\\EloquentZoho\\Providers\\ZohoServiceProvider"
                 ]
         }
-    }    
+    },
+    "require-dev": {
+        "laravel/pint": "^1.12"
+    }
 }

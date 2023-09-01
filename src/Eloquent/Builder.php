@@ -9,7 +9,6 @@ class Builder extends EloquentBuilder
     /**
      * Insert new records or update the existing ones.
      *
-     * @param  array  $values
      * @param  array|string  $uniqueBy
      * @param  array|null  $update
      * @return int
@@ -24,12 +23,10 @@ class Builder extends EloquentBuilder
     }
 
     /**
-         * Create or update a record matching the attributes, and fill it with values.
-         *
-         * @param  array  $attributes
-         * @param  array  $values
-         * @return \Illuminate\Database\Eloquent\Model|static
-         */
+     * Create or update a record matching the attributes, and fill it with values.
+     *
+     * @return \Illuminate\Database\Eloquent\Model|static
+     */
     public function updateOrCreate(array $attributes, array $values = [])
     {
         $values = array_merge($attributes, $values);
@@ -38,7 +35,7 @@ class Builder extends EloquentBuilder
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function update(array $values, array $options = [])
     {
@@ -51,7 +48,6 @@ class Builder extends EloquentBuilder
      * wiil be reverted
      * Issue in laravel frawework https://github.com/laravel/framework/issues/27791.
      *
-     * @param  array  $values
      * @return array
      */
     protected function addUpdatedAtColumn(array $values)
