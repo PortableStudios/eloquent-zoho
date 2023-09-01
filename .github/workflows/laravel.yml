@@ -1,22 +1,46 @@
-name: Laravel
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
-  laravel-tests:
 
+  phpunit:
+    name: PHPUnit
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - "8.2"
+        dependency-versions:
+          - "lowest"
+          - "highest"
+
     steps:
-    - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
-      with:
-        php-version: '8.0'
-    - uses: actions/checkout@v3
-    - name: Install Dependencies
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-    - name: Execute tests (Unit and Feature tests) via PHPUnit
-      run: bash ./check
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: Install composer dependencies
+        uses: ramsey/composer-install@v2
+        with:
+          dependency-versions: ${{ matrix.dependency-versions }}
+
+      - name: Run Pint
+        run: vendor/bin/pint --test
+      - name: Run PHPCS
+        run: vendor/bin/phpcs
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit tests
