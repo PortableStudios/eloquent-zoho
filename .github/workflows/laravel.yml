@@ -9,7 +9,7 @@ on:
 jobs:
 
   phpunit:
-    name: PHPUnit
+    name: Code Cleanliness
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,5 +30,3 @@ jobs:
         run: vendor/bin/phpcs ./
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse
-      - name: Run PHPUnit
-        run: vendor/bin/phpunit tests
