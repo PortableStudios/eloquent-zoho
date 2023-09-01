@@ -1,0 +1,39 @@
+#!/bin/bash
+set -e
+
+ask_run() {
+    read -p "$1 \`$2\`. Run it now (Y/n)? " run
+
+    case ${run:0:1} in
+        y|Y )
+            $2
+        ;;
+    esac
+}
+
+if (./vendor/bin/pint --test > /dev/null 2>/dev/null); then
+    echo 'pint OK'
+else
+  echo 'pint FAIL'
+  ask_run 'pint can attempt to fix the issues with' './vendor/bin/pint'
+fi
+
+if (./vendor/bin/phpcs ./ > /dev/null 2>/dev/null); then
+    echo 'PHPCS OK'
+else
+    echo 'PHPCS FAIL'
+    ask_run 'More information available with' './vendor/bin/phpcs ./'
+    ask_run 'Attempt to fix issues with' './vendor/bin/phpcbf ./'
+fi
+
+if (./vendor/bin/phpstan analyse > /dev/null 2>/dev/null); then
+    echo 'PHPStan OK'
+else
+    echo 'PHPStan FAIL'
+    ask_run 'More information available with' './vendor/bin/phpstan analyse'
+fi
+
+ask_run 'Unit test suite available with' 'php artisan test'
+
+echo '=================='
+echo 'Everything Complete'

@@ -7,6 +7,20 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 class Builder extends EloquentBuilder
 {
     /**
+     * The base query builder instance.
+     *
+     * @var \Portable\EloquentZoho\Eloquent\Query\Builder
+     */
+    protected $query;
+
+    /**
+     * The database connection instance.
+     *
+     * @var \Portable\EloquentZoho\Eloquent\Connection
+     */
+    public $connection;
+
+    /**
      * Insert new records or update the existing ones.
      *
      * @param  array|string  $uniqueBy
@@ -32,6 +46,8 @@ class Builder extends EloquentBuilder
         $values = array_merge($attributes, $values);
 
         $this->upsert($values, $this->model->getKeyName());
+
+        return $this->where($attributes)->first() ?: $this->create($values);
     }
 
     /**
@@ -66,7 +82,7 @@ class Builder extends EloquentBuilder
     }
 
     /**
-     * @return \App\Support\ZohoEloquent\Connection
+     * @return \Portable\EloquentZoho\Eloquent\Connection
      */
     public function getConnection()
     {

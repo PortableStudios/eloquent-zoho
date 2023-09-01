@@ -3,32 +3,33 @@
 namespace Portable\EloquentZoho\Eloquent\Schema;
 
 use Illuminate\Database\Schema\Grammars\Grammar as BaseGrammar;
+use Illuminate\Database\Schema\ColumnDefinition;
 
 class Grammar extends BaseGrammar
 {
-    public function buildColumns(Blueprint $blueprint)
+    public function buildColumns(Blueprint $blueprint): array
     {
         $columns = [];
         foreach ($blueprint->getColumns() as $column) {
             $columns[] = [
-                'COLUMNNAME' => $column->name,
-                'MANDATORY' => $column->nullable ? 'No' : 'Yes',
-                'DEFAULT' => $column->default,
-                'DESCRIPTION' => $column->comment,
-                'DATATYPE' => $this->typeString($blueprint, $column),
+                'COLUMNNAME' => $column['name'],
+                'MANDATORY' => $column['nullable'] ? 'No' : 'Yes',
+                'DEFAULT' => $column['default'],
+                'DESCRIPTION' => $column['comment'],
+                'DATATYPE' => $this->typeString($column),
             ];
         }
 
         return $columns;
     }
 
-    protected function typeString($blueprint, $column)
+    protected function typeString(ColumnDefinition $column): string
     {
-        if ($column->autoIncrement) {
+        if ($column['autoIncrement']) {
             return 'AUTO_NUMBER';
         }
 
-        switch ($column->type) {
+        switch ($column['type']) {
             case 'bigInteger':
                 return 'NUMBER';
             case 'email':
@@ -41,7 +42,7 @@ class Grammar extends BaseGrammar
             case 'dateTime':
                 return 'DATE';
             default:
-                throw new \Exception("Data type not supported: {$column->type}");
+                throw new \Exception("Data type not supported: {$column['type']}");
         }
         /*                PLAIN
         MULTI_LINE

@@ -7,15 +7,16 @@ use Illuminate\Support\Str;
 use Portable\EloquentZoho\Eloquent\Query\Builder;
 use Portable\EloquentZoho\Eloquent\Query\Grammar;
 use Portable\EloquentZoho\ZohoClient;
+use Illuminate\Http\Client\Response;
 
 class Connection extends DatabaseConnection
 {
     /**
      * @var ZohoClient
      */
-    protected $connection;
+    protected ZohoClient $connection;
 
-    protected $folderName;
+    protected string $folderName;
 
     public function __construct(protected array $zohoConfig)
     {
@@ -38,7 +39,7 @@ class Connection extends DatabaseConnection
         $this->useDefaultSchemaGrammar();
     }
 
-    public function generateAuthToken(string $username, string $password): string
+    public function generateAuthToken(string $username, string $password): ?string
     {
         return $this->connection->generateAuthToken($username, $password);
     }
@@ -112,7 +113,7 @@ class Connection extends DatabaseConnection
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
-            throw new \Exception('Zoho insert failed: '.$msg);
+            throw new \Exception('Zoho insert failed: ' . $msg);
         }
 
         return count($json['response']['result']['rows']);
@@ -124,7 +125,7 @@ class Connection extends DatabaseConnection
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
-            throw new \Exception('Zoho insert failed: '.$msg);
+            throw new \Exception('Zoho insert failed: ' . $msg);
         }
 
         return $json['response']['result']['updatedRows'];
@@ -139,7 +140,7 @@ class Connection extends DatabaseConnection
         return $this->connection->importUpsert($toTable, $data, $key);
     }
 
-    public function zohoDelete($fromTable, $where): int
+    public function zohoDelete(string $fromTable, string $where): int
     {
         // For reasons that make absolutely no sense to me, backslash
         // escaping is inconsistent depending on operation.  For example,
@@ -151,18 +152,18 @@ class Connection extends DatabaseConnection
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
-            throw new \Exception('Zoho delete failed: '.$msg);
+            throw new \Exception('Zoho delete failed: ' . $msg);
         }
 
         return $json['response']['result']['deletedrows'];
     }
 
-    public function zohoCreateTable($tableDefinition)
+    public function zohoCreateTable(array $tableDefinition): Response
     {
         return $this->connection->createTable($tableDefinition);
     }
 
-    public function zohoDeleteTable($tableName)
+    public function zohoDeleteTable(string $tableName): Response
     {
         return $this->connection->deleteTable($tableName);
     }

@@ -13,7 +13,7 @@ class ZohoServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/eloquent-zoho.php',
+            __DIR__ . '/../config/eloquent-zoho.php',
             'eloquent-zoho'
         );
         // Add database driver.
@@ -32,7 +32,7 @@ class ZohoServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__.'/../config/eloquent-zoho.php' => config_path('eloquent-zoho.php'),
+            __DIR__ . '/../config/eloquent-zoho.php' => config_path('eloquent-zoho.php'),
         ], 'eloquent-zoho');
 
         $this->app->bind('zoho.builder', function () {

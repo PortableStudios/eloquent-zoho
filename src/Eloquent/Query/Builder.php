@@ -9,7 +9,7 @@ class Builder extends BaseBuilder
     /**
      * The database connection instance.
      *
-     * @var \App\Support\ZohoEloquent\Connection
+     * @var \Portable\EloquentZoho\Eloquent\Connection
      */
     public $connection;
 
@@ -92,7 +92,7 @@ class Builder extends BaseBuilder
             'avg' => array_sum(array_column($results, $column)) / count($results),
             'min' => min(array_column($results, $column)),
             'max' => max(array_column($results, $column)),
-            default => throw new \Exception('Unsupported aggregate function: '.$function),
+            default => throw new \Exception('Unsupported aggregate function: ' . $function),
         };
 
         return $results;
@@ -110,7 +110,7 @@ class Builder extends BaseBuilder
         // ID to let developers to simply and quickly remove a single row from this
         // database without manually specifying the "where" clauses on the query.
         if (! is_null($id)) {
-            $this->where($this->from.'.id', '=', $id);
+            $this->where($this->from . '.id', '=', $id);
         }
 
         $this->applyBeforeQueryCallbacks();
@@ -130,5 +130,16 @@ class Builder extends BaseBuilder
     protected function isBitwiseOperator($operator)
     {
         return in_array(strtolower($operator), $this->bitwiseOperators, true);
+    }
+
+
+    /**
+     * Get the database connection instance.
+     *
+     * @return \Portable\EloquentZoho\Eloquent\Connection
+     */
+    public function getConnection()
+    {
+        return $this->connection;
     }
 }

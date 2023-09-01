@@ -18,7 +18,7 @@ abstract class ZohoModel extends Model
 
     public $incrementing = false;
 
-    abstract public static function arrayFromLocal(Model $local);
+    abstract public static function arrayFromLocal(Model $local): array;
 
     public function __construct(array $attributes = [])
     {

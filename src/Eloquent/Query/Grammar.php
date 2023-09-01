@@ -31,21 +31,23 @@ class Grammar extends BaseGrammar
 
         switch ($where['type']) {
             case 'Basic':
-                $column = str_replace($fromTable.'.', '', $where['column']);
+                $column = str_replace($fromTable . '.', '', $where['column']);
 
                 return '("'
-                    .$column
-                    .'" '.$where['operator'].' '
-                    .$this->quoteString($where['value']).') '
-                    .$where['boolean'];
+                    . $column
+                    . '" ' . $where['operator'] . ' '
+                    . $this->quoteString($where['value']) . ') '
+                    . $where['boolean'];
             case 'Nested':
                 $subQuery = $this->compileWheres($where['query']);
 
-                return '('.$subQuery.') '.$where['boolean'];
+                return '(' . $subQuery . ') ' . $where['boolean'];
             case 'In':
-                return '("'.$where['column'].'" IN ('.$this->quoteString($where['values']).')) '.$where['boolean'];
+                return '("' . $where['column']
+                    . '" IN (' . $this->quoteString($where['values'])
+                    . ')) ' . $where['boolean'];
             default:
-                throw new Exception('Unknown where type: '.$where['type']);
+                throw new Exception('Unknown where type: ' . $where['type']);
         }
     }
 

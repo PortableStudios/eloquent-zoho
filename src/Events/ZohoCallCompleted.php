@@ -21,7 +21,7 @@ class ZohoCallCompleted
     ) {
     }
 
-    public function successful()
+    public function successful(): bool
     {
         return $this->response->successful();
     }

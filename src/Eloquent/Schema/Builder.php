@@ -9,7 +9,7 @@ class Builder extends \Illuminate\Database\Schema\Builder
     /**
      * The database connection instance.
      *
-     * @var \App\Support\ZohoEloquent\Connection
+     * @var \Portable\EloquentZoho\Eloquent\Connection
      */
     protected $connection;
 
@@ -26,7 +26,7 @@ class Builder extends \Illuminate\Database\Schema\Builder
         return new Blueprint($table, $callback);
     }
 
-    public function generateAuthToken(string $username, string $password)
+    public function generateAuthToken(string $username, string $password): ?string
     {
         return $this->connection->generateAuthToken($username, $password);
     }

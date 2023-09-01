@@ -1,0 +1,23 @@
+includes:
+  - ./vendor/nunomaduro/larastan/extension.neon
+  - ./vendor/archtechx/enums/extension.neon
+
+parameters:
+  paths:
+    - src
+  stubFiles:
+    - phpstan-stubs/Spatie/Permissions/Models.stub
+    - phpstan-stubs/Spatie/Permissions/Exceptions.stub
+    - phpstan-stubs/Staudenmeir/LaravelAdjacencyList/Relations.stub
+
+  # The level 9 is the highest level
+  level: 6
+
+  checkMissingIterableValueType: false
+  checkGenericClassInNonGenericObjectType: false
+
+  # Handle some custom returns that PHP stan can't cope with
+  earlyTerminatingMethodCalls:
+    App\Actions\Fortify\AttemptToAuthenticate:
+      - throwFailedAuthenticationException
+
