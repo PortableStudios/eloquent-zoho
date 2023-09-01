@@ -1,3 +1,5 @@
+[![CI](https://github.com/PortableStudios/eloquent-zoho/actions/workflows/laravel.yml/badge.svg)](https://github.com/PortableStudios/eloquent-zoho/actions/workflows/laravel.yml)
+
 # Eloquent Zoho
 
 This package provides a rudimentary(aka, far from complete) implementation of the Zoho API as an Eloquent driver for Laravel, to enable the use of Zoho data models as eloquent models.
