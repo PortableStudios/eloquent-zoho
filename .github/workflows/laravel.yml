@@ -14,12 +14,8 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        php-version:
-          - "8.2"
-        dependency-versions:
-          - "lowest"
-          - "highest"
+      php-version:
+        - "8.2"
 
     steps:
       - name: Checkout
@@ -39,7 +35,7 @@ jobs:
       - name: Run Pint
         run: vendor/bin/pint --test
       - name: Run PHPCS
-        run: vendor/bin/phpcs
+        run: vendor/bin/phpcs ./
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse
       - name: Run PHPUnit
