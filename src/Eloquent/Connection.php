@@ -37,6 +37,11 @@ class Connection extends DatabaseConnection
         $this->useDefaultSchemaGrammar();
     }
 
+    public function generateAuthToken(string $username, string $password): string
+    {
+        return $this->connection->generateAuthToken($username, $password);
+    }
+
     public function getFolderName(): string
     {
         return $this->folderName;

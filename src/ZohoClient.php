@@ -42,7 +42,7 @@ class ZohoClient
      */
     public function generateAuthToken(string $userEmail, string $userPassword): string|null
     {
-        if (! $this->connected()) {
+        if (! $this->apiUrl || $this->apiEmail) {
             throw new Exception("Cannot connect to Zoho Analytics with current configuration. Check URL and credentials.");
         }
 
