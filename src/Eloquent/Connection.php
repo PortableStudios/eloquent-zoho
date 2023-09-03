@@ -6,6 +6,7 @@ use Illuminate\Database\Connection as DatabaseConnection;
 use Illuminate\Support\Str;
 use Portable\EloquentZoho\Eloquent\Query\Builder;
 use Portable\EloquentZoho\Eloquent\Query\Grammar;
+use Portable\EloquentZoho\Exceptions\ConfigurationException;
 use Portable\EloquentZoho\ZohoClient;
 use Illuminate\Http\Client\Response;
 
@@ -14,24 +15,24 @@ class Connection extends DatabaseConnection
     /**
      * @var ZohoClient
      */
-    protected ZohoClient $connection;
+    protected ZohoClient $client;
 
     protected string $folderName;
 
     public function __construct(protected array $zohoConfig)
     {
-        $requiredKeys = ['api_url', 'api_email', 'auth_token', 'workspace_name', 'folder_name'];
+        $requiredKeys = ['api_url', 'api_email', 'workspace_name', 'folder_name'];
         foreach ($requiredKeys as $key) {
             if (! isset($zohoConfig[$key])) {
-                throw new \Exception("Missing required key '$key' in zoho config");
+                throw new ConfigurationException("Missing required key '$key' in zoho config");
             }
         }
 
-        $this->connection = new ZohoClient(
+        $this->client = new ZohoClient(
             $zohoConfig['api_url'],
             $zohoConfig['api_email'],
-            $zohoConfig['auth_token'],
             $zohoConfig['workspace_name'],
+            $zohoConfig['auth_token'] ?? null,
         );
         $this->folderName = $zohoConfig['folder_name'];
         $this->useDefaultPostProcessor();
@@ -39,9 +40,14 @@ class Connection extends DatabaseConnection
         $this->useDefaultSchemaGrammar();
     }
 
+    public function setAuthToken(?string $token): void
+    {
+        $this->client->setAuthToken($token);
+    }
+
     public function generateAuthToken(string $username, string $password): ?string
     {
-        return $this->connection->generateAuthToken($username, $password);
+        return $this->client->generateAuthToken($username, $password);
     }
 
     public function getFolderName(): string
@@ -80,7 +86,7 @@ class Connection extends DatabaseConnection
     public function hasTable(string $table): bool
     {
         try {
-            $this->connection->exportTable($table, 'badcolumnname = 1');
+            $this->client->exportTable($table, 'badcolumnname = 1');
 
             // If for some insane reason, the table exists and has a column called badcolumname
             // then we'll get a successful response and we know the table exists
@@ -97,7 +103,7 @@ class Connection extends DatabaseConnection
 
     public function zohoSelect(string $fromTable, string $query): array
     {
-        $data = $this->connection->exportTable($fromTable, $query);
+        $data = $this->client->exportTable($fromTable, $query);
 
         $rows = [];
         foreach ($data['response']['result']['rows'] as $row) {
@@ -109,7 +115,7 @@ class Connection extends DatabaseConnection
 
     public function zohoInsert(string $toTable, array $data): int
     {
-        $result = $this->connection->addTableRow($toTable, $data);
+        $result = $this->client->addTableRow($toTable, $data);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
@@ -121,7 +127,7 @@ class Connection extends DatabaseConnection
 
     public function zohoUpdate(string $fromTable, array $data, string $where): int
     {
-        $result = $this->connection->updateTableRow($fromTable, $data, $where);
+        $result = $this->client->updateTableRow($fromTable, $data, $where);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
@@ -137,7 +143,7 @@ class Connection extends DatabaseConnection
             $key = [$key];
         }
 
-        return $this->connection->importUpsert($toTable, $data, $key);
+        return $this->client->importUpsert($toTable, $data, $key);
     }
 
     public function zohoDelete(string $fromTable, string $where): int
@@ -148,7 +154,7 @@ class Connection extends DatabaseConnection
         // I have no idea why, but this is what works.
         $where = str_replace('\\\\\\\\\\', '\\\\', $where);
 
-        $result = $this->connection->deleteTableRow($fromTable, $where);
+        $result = $this->client->deleteTableRow($fromTable, $where);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
@@ -160,12 +166,12 @@ class Connection extends DatabaseConnection
 
     public function zohoCreateTable(array $tableDefinition): Response
     {
-        return $this->connection->createTable($tableDefinition);
+        return $this->client->createTable($tableDefinition);
     }
 
     public function zohoDeleteTable(string $tableName): Response
     {
-        return $this->connection->deleteTable($tableName);
+        return $this->client->deleteTable($tableName);
     }
 
     /**
