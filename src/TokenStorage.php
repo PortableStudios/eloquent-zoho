@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class TokenStorage
 {
-    public static function get(): string
+    public static function get(): ?string
     {
         return match (config('eloquent-zoho.token_driver')) {
             'cache' => Cache::get('zoho_token'),

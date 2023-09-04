@@ -71,18 +71,17 @@ class ZohoClient
         }
 
         $response = Http::get(
-            $this->baseUrl . '/iam/apiauthtoken/nb/create?SCOPE=ZROP/reportsapi',
-            [
-                'EMAIL_ID' => $userEmail,
-                'PASSWORD' => $userPassword,
-            ]
+            $this->baseUrl . '/iam/apiauthtoken/nb/create?SCOPE=ZROP/reportsapi' .
+            '&EMAIL_ID=' . urlencode($userEmail) .
+            '&PASSWORD='. urlencode($userPassword)
         );
 
         if ($response->successful()) {
-            if (preg_match('#AUTHTOKEN=([a-f0-9]+)\b#', $response->body(), $matches)) {
+            $body = $response->body();
+            if (preg_match('#AUTHTOKEN=([a-f0-9]+)\b#', $body, $matches)) {
                 return $matches[1];
             } else {
-                throw new TokenGenerationException('Unable to generate auth token');
+                throw new TokenGenerationException('Unable to generate auth token: ' . $body);
             }
         }
         throw new TokenGenerationException('Unable to generate auth token');

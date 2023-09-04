@@ -199,7 +199,7 @@ class Connection extends DatabaseConnection
             // Do we have a cached token?
             $token = TokenStorage::get();
             if (!$token) {
-                $token = $this->client->generateAuthToken($this->zConfig['username'], $this->zConfig['password']);
+                $token = $this->client->generateAuthToken($this->zConfig['email'], $this->zConfig['password']);
                 TokenStorage::set($token);
             }
             $this->client->setAuthToken($token);
