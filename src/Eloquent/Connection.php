@@ -21,27 +21,27 @@ class Connection extends DatabaseConnection
 
     protected string $folderName;
 
-    public function __construct(protected array $zohoConfig)
+    public function __construct(protected array $zConfig)
     {
         $requiredKeys = ['api_url', 'api_email', 'username','password', 'database', 'folder_name'];
         foreach ($requiredKeys as $key) {
-            if (! isset($zohoConfig[$key])) {
+            if (! isset($zConfig[$key])) {
                 throw new ConfigurationException("Missing required key '$key' in zoho config");
             }
         }
 
         $this->client = new ZohoClient(
-            $zohoConfig['api_url'],
-            $zohoConfig['api_email'],
-            $zohoConfig['database'],
-            $zohoConfig['auth_token'] ?? null,
+            $zConfig['api_url'],
+            $zConfig['api_email'],
+            $zConfig['database'],
+            $zConfig['auth_token'] ?? null,
         );
 
         // If the client is configured, but not connected, we need
         // to generate an auth token.
         if ($this->client->configured() && !$this->client->connected()) {
             // Do we have a cached token?
-            $token = Cache::get('zoho_token', null) ?: $this->generateAuthToken($zohoConfig['username'], $zohoConfig['password']);
+            $token = Cache::get('zoho_token') ?: $this->generateAuthToken($zConfig['username'], $zConfig['password']);
             Cache::forever('zoho_token', $token);
             $this->client->setAuthToken($token);
         }
@@ -50,7 +50,7 @@ class Connection extends DatabaseConnection
             throw new NotConnectedException('Zoho client is not connected');
         }
 
-        $this->folderName = $zohoConfig['folder_name'];
+        $this->folderName = $zConfig['folder_name'];
         $this->useDefaultPostProcessor();
         $this->useDefaultQueryGrammar();
         $this->useDefaultSchemaGrammar();
