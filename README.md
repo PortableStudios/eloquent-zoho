@@ -8,25 +8,18 @@ Database definitions in `config/databases.php` need to provide the following con
 
 ```
 'driver' => 'zoho',
-'api_url' => // the URL for your Zoho workspace,
-'api_email' => // the API  email for your Zoho workspace,
-'workspace_name' => // The workspace name,
-'folder_name' => // The folder where your tables are stored within Zoho.  This is used when manipulating data schemas using ZohoSchema
-'auth_token' => // Your generated auth token, see below
+'host' => // the base URL for your Zoho workspace, e.g. 'bi.myorg.com',
+'port' => // Usually 443, assuming you have SSL for your workspace,
+'username' => // the API email for your zoho workspace,
+'database' => // The workspace name,
+'prefix' => // The folder where your tables are stored within Zoho.  This is used when manipulating data schemas using ZohoSchema
+'email' => // Your *user* email, used for generating tokens
+'password' => // Your *user* password, used for generating tokens
 ```
 
 The driver assumes that your database connection key is 'zoho'.
 
 (E.g within `config/database.php`, you will define `connections['zoho']` with your config).
-
-## Authentication
-Your application must generate, and be responsbile for storing, an auth token prior to interacting with the API through the driver.
-
-You can use the `ZohoSchema` facade to achieve this:
-```
-use Portable\EloquentZoho\Eloquent\Facades\ZohoSchema;
-$authToken = ZohoSchema::generateAuthToken('zoho_user_email','zoho_user_password');
-```
 
 ## Database schema
 You can create and manipulate Schemas as normal with the `ZohoSchema` facade:

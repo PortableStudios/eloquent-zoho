@@ -25,9 +25,4 @@ class Builder extends \Illuminate\Database\Schema\Builder
     {
         return new Blueprint($table, $callback);
     }
-
-    public function generateAuthToken(string $username, string $password): ?string
-    {
-        return $this->connection->generateAuthToken($username, $password);
-    }
 }

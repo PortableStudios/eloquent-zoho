@@ -7,18 +7,26 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Portable\EloquentZoho\Events\ZohoCallCompleted;
+use Portable\EloquentZoho\Exceptions\ConfigurationException;
 use Portable\EloquentZoho\Exceptions\NotConnectedException;
+use Portable\EloquentZoho\Exceptions\TokenGenerationException;
 
 class ZohoClient
 {
     public const DATE_FORMAT = 'yyyy-MM-dd HH:mm:ss';
+    protected string $baseUrl = '';
 
     public function __construct(
-        protected string $apiUrl,
+        protected string $apiHost,
+        protected string $apiPort,
         protected string $apiEmail,
         protected string $workspaceName,
         protected ?string $authToken = null,
     ) {
+        $this->baseUrl = implode('/', [
+            (intval($this->apiPort) === 443 ? 'https:/' : 'http:/'),
+            $this->apiHost
+        ]);
     }
 
     /*
@@ -26,7 +34,8 @@ class ZohoClient
     */
     public function configured(): bool
     {
-        return $this->apiUrl
+        return $this->apiHost
+            && $this->apiPort
             && $this->apiEmail
             && $this->workspaceName;
     }
@@ -38,7 +47,8 @@ class ZohoClient
      */
     public function connected(): bool
     {
-        return $this->apiUrl
+        return $this->apiHost
+            && $this->apiPort
             && $this->apiEmail
             && $this->authToken;
     }
@@ -55,13 +65,13 @@ class ZohoClient
      */
     public function generateAuthToken(string $userEmail, string $userPassword): ?string
     {
-        if (! $this->apiUrl || $this->apiEmail) {
-            throw new Exception('Cannot connect to Zoho Analytics with current configuration.'
+        if (!$this->configured()) {
+            throw new ConfigurationException('Cannot connect to Zoho Analytics with current configuration.'
                 . ' Check URL and credentials.');
         }
 
         $response = Http::get(
-            $this->apiUrl . '/iam/apiauthtoken/nb/create?SCOPE=ZROP/reportsapi',
+            $this->baseUrl . '/iam/apiauthtoken/nb/create?SCOPE=ZROP/reportsapi',
             [
                 'EMAIL_ID' => $userEmail,
                 'PASSWORD' => $userPassword,
@@ -71,9 +81,11 @@ class ZohoClient
         if ($response->successful()) {
             if (preg_match('#AUTHTOKEN=([a-f0-9]+)\b#', $response->body(), $matches)) {
                 return $matches[1];
+            } else {
+                throw new TokenGenerationException('Unable to generate auth token');
             }
         }
-        return null;
+        throw new TokenGenerationException('Unable to generate auth token');
     }
 
     /**
@@ -113,7 +125,7 @@ class ZohoClient
 
     protected function buildUrl(string $url): string
     {
-        $fullUrl = $this->apiUrl
+        $fullUrl = $this->baseUrl
         . '/api'
         . '/' . $this->apiEmail
         . '/' . $this->workspaceName;

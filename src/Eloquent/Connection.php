@@ -9,48 +9,28 @@ use Portable\EloquentZoho\Eloquent\Query\Grammar;
 use Portable\EloquentZoho\Exceptions\ConfigurationException;
 use Portable\EloquentZoho\ZohoClient;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Cache;
 use Portable\EloquentZoho\Exceptions\NotConnectedException;
+use Portable\EloquentZoho\TokenStorage;
 
 class Connection extends DatabaseConnection
 {
     /**
      * @var ZohoClient
      */
-    protected ZohoClient $client;
+    protected ?ZohoClient $client = null;
 
     protected string $folderName;
 
     public function __construct(protected array $zConfig)
     {
-        $requiredKeys = ['api_url', 'api_email', 'username','password', 'database', 'folder_name'];
+        $requiredKeys = ['host', 'port', 'username','password', 'database', 'prefix','email'];
         foreach ($requiredKeys as $key) {
             if (! isset($zConfig[$key])) {
                 throw new ConfigurationException("Missing required key '$key' in zoho config");
             }
         }
 
-        $this->client = new ZohoClient(
-            $zConfig['api_url'],
-            $zConfig['api_email'],
-            $zConfig['database'],
-            $zConfig['auth_token'] ?? null,
-        );
-
-        // If the client is configured, but not connected, we need
-        // to generate an auth token.
-        if ($this->client->configured() && !$this->client->connected()) {
-            // Do we have a cached token?
-            $token = Cache::get('zoho_token') ?: $this->generateAuthToken($zConfig['username'], $zConfig['password']);
-            Cache::forever('zoho_token', $token);
-            $this->client->setAuthToken($token);
-        }
-
-        if (! $this->client->connected()) {
-            throw new NotConnectedException('Zoho client is not connected');
-        }
-
-        $this->folderName = $zConfig['folder_name'];
+        $this->folderName = $zConfig['prefix'];
         $this->useDefaultPostProcessor();
         $this->useDefaultQueryGrammar();
         $this->useDefaultSchemaGrammar();
@@ -58,12 +38,7 @@ class Connection extends DatabaseConnection
 
     public function setAuthToken(?string $token): void
     {
-        $this->client->setAuthToken($token);
-    }
-
-    public function generateAuthToken(string $username, string $password): ?string
-    {
-        return $this->client->generateAuthToken($username, $password);
+        $this->getClient()->setAuthToken($token);
     }
 
     public function getFolderName(): string
@@ -102,7 +77,7 @@ class Connection extends DatabaseConnection
     public function hasTable(string $table): bool
     {
         try {
-            $this->client->exportTable($table, 'badcolumnname = 1');
+            $this->getClient()->exportTable($table, 'badcolumnname = 1');
 
             // If for some insane reason, the table exists and has a column called badcolumname
             // then we'll get a successful response and we know the table exists
@@ -119,7 +94,7 @@ class Connection extends DatabaseConnection
 
     public function zohoSelect(string $fromTable, string $query): array
     {
-        $data = $this->client->exportTable($fromTable, $query);
+        $data = $this->getClient()->exportTable($fromTable, $query);
 
         $rows = [];
         foreach ($data['response']['result']['rows'] as $row) {
@@ -131,7 +106,7 @@ class Connection extends DatabaseConnection
 
     public function zohoInsert(string $toTable, array $data): int
     {
-        $result = $this->client->addTableRow($toTable, $data);
+        $result = $this->getClient()->addTableRow($toTable, $data);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
@@ -143,7 +118,7 @@ class Connection extends DatabaseConnection
 
     public function zohoUpdate(string $fromTable, array $data, string $where): int
     {
-        $result = $this->client->updateTableRow($fromTable, $data, $where);
+        $result = $this->getClient()->updateTableRow($fromTable, $data, $where);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
@@ -159,7 +134,7 @@ class Connection extends DatabaseConnection
             $key = [$key];
         }
 
-        return $this->client->importUpsert($toTable, $data, $key);
+        return $this->getClient()->importUpsert($toTable, $data, $key);
     }
 
     public function zohoDelete(string $fromTable, string $where): int
@@ -170,7 +145,7 @@ class Connection extends DatabaseConnection
         // I have no idea why, but this is what works.
         $where = str_replace('\\\\\\\\\\', '\\\\', $where);
 
-        $result = $this->client->deleteTableRow($fromTable, $where);
+        $result = $this->getClient()->deleteTableRow($fromTable, $where);
         $json = json_decode(str_replace("\\'", "'", $result->body()), true);
         if (! $result->successful()) {
             $msg = $json['response']['error']['message'];
@@ -182,12 +157,12 @@ class Connection extends DatabaseConnection
 
     public function zohoCreateTable(array $tableDefinition): Response
     {
-        return $this->client->createTable($tableDefinition);
+        return $this->getClient()->createTable($tableDefinition);
     }
 
     public function zohoDeleteTable(string $tableName): Response
     {
-        return $this->client->deleteTable($tableName);
+        return $this->getClient()->deleteTable($tableName);
     }
 
     /**
@@ -202,5 +177,38 @@ class Connection extends DatabaseConnection
             $this->getQueryGrammar(),
             $this->getPostProcessor()
         );
+    }
+
+    protected function getClient(): ZohoClient
+    {
+        if ($this->client) {
+            return $this->client;
+        }
+
+        $this->client = new ZohoClient(
+            $this->zConfig['host'],
+            $this->zConfig['port'],
+            $this->zConfig['username'],
+            $this->zConfig['database'],
+            $this->zConfig['auth_token'] ?? null,
+        );
+
+        // If the client is configured, but not connected, we need
+        // to generate an auth token.
+        if ($this->client->configured() && !$this->client->connected()) {
+            // Do we have a cached token?
+            $token = TokenStorage::get();
+            if (!$token) {
+                $token = $this->client->generateAuthToken($this->zConfig['username'], $this->zConfig['password']);
+                TokenStorage::set($token);
+            }
+            $this->client->setAuthToken($token);
+        }
+
+        if (! $this->client->connected()) {
+            throw new NotConnectedException('Zoho client is not connected');
+        }
+
+        return $this->client;
     }
 }
