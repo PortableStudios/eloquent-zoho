@@ -19,7 +19,16 @@ class ZohoClient
         protected string $workspaceName,
         protected ?string $authToken = null,
     ) {
-        //
+    }
+
+    /*
+    * Determine if the service has enough configuration data to run correctly
+    */
+    public function configured(): bool
+    {
+        return $this->apiUrl
+            && $this->apiEmail
+            && $this->workspaceName;
     }
 
     /**

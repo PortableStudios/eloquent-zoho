@@ -9,6 +9,8 @@ use Portable\EloquentZoho\Eloquent\Query\Grammar;
 use Portable\EloquentZoho\Exceptions\ConfigurationException;
 use Portable\EloquentZoho\ZohoClient;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
+use Portable\EloquentZoho\Exceptions\NotConnectedException;
 
 class Connection extends DatabaseConnection
 {
@@ -21,7 +23,7 @@ class Connection extends DatabaseConnection
 
     public function __construct(protected array $zohoConfig)
     {
-        $requiredKeys = ['api_url', 'api_email', 'workspace_name', 'folder_name'];
+        $requiredKeys = ['api_url', 'api_email', 'username','password', 'database', 'folder_name'];
         foreach ($requiredKeys as $key) {
             if (! isset($zohoConfig[$key])) {
                 throw new ConfigurationException("Missing required key '$key' in zoho config");
@@ -31,9 +33,23 @@ class Connection extends DatabaseConnection
         $this->client = new ZohoClient(
             $zohoConfig['api_url'],
             $zohoConfig['api_email'],
-            $zohoConfig['workspace_name'],
+            $zohoConfig['database'],
             $zohoConfig['auth_token'] ?? null,
         );
+
+        // If the client is configured, but not connected, we need
+        // to generate an auth token.
+        if ($this->client->configured() && !$this->client->connected()) {
+            // Do we have a cached token?
+            $token = Cache::get('zoho_token', null) ?: $this->generateAuthToken($zohoConfig['username'], $zohoConfig['password']);
+            Cache::forever('zoho_token', $token);
+            $this->client->setAuthToken($token);
+        }
+
+        if (! $this->client->connected()) {
+            throw new NotConnectedException('Zoho client is not connected');
+        }
+
         $this->folderName = $zohoConfig['folder_name'];
         $this->useDefaultPostProcessor();
         $this->useDefaultQueryGrammar();
