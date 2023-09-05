@@ -73,7 +73,7 @@ class ZohoClient
         $response = Http::get(
             $this->baseUrl . '/iam/apiauthtoken/nb/create?SCOPE=ZROP/reportsapi' .
             '&EMAIL_ID=' . urlencode($userEmail) .
-            '&PASSWORD='. urlencode($userPassword)
+            '&PASSWORD=' . urlencode($userPassword)
         );
 
         if ($response->successful()) {
