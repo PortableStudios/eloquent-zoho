@@ -89,9 +89,9 @@ class Builder extends BaseBuilder
         $results[0][$alias] = match ($function) {
             'count' => count($results),
             'sum' => array_sum(array_column($results, $column)),
-            'avg' => array_sum(array_column($results, $column)) / count($results),
-            'min' => min(array_column($results, $column)),
-            'max' => max(array_column($results, $column)),
+            'avg' => count($results) > 0 ? array_sum(array_column($results, $column)) / count($results) : 0,
+            'min' => count($results) > 0 ? min(array_column($results, $column)) : 0,
+            'max' => count($results) > 0 ? max(array_column($results, $column)) : 0,
             default => throw new \Exception('Unsupported aggregate function: ' . $function),
         };
 
