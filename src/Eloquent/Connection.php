@@ -134,6 +134,13 @@ class Connection extends DatabaseConnection
             $key = [$key];
         }
 
+        foreach ($data as $rowIndex => $row) {
+            foreach ($row as $field => $value) {
+                $row[$field] = $value instanceof \Stringable ? (string) $value : $value;
+            }
+            $data[$rowIndex] = $row;
+        }
+
         return $this->getClient()->importUpsert($toTable, $data, $key);
     }
 

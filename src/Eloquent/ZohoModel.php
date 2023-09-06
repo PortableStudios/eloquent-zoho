@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Date;
 use Portable\EloquentZoho\Casts\ZohoInteger;
-use Portable\EloquentZoho\Eloquent\Query\Builder as QueryBuilder;
 
 abstract class ZohoModel extends Model
 {
@@ -24,24 +23,6 @@ abstract class ZohoModel extends Model
     {
         parent::__construct($attributes);
         $this->casts = array_merge($this->casts, ['id' => ZohoInteger::class]);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function newEloquentBuilder($query)
-    {
-        return new Builder($query);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function newBaseQueryBuilder()
-    {
-        $connection = $this->getConnection();
-
-        return new QueryBuilder($connection, $connection->getQueryGrammar(), $connection->getPostProcessor());
     }
 
     /**
