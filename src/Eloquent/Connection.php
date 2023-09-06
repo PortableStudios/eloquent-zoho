@@ -136,9 +136,7 @@ class Connection extends DatabaseConnection
 
         foreach ($data as $rowIndex => $row) {
             foreach ($row as $field => $value) {
-                if (is_object($value) && method_exists($value, '__toString')) {
-                    $row[$field] = $value->__toString();
-                }
+                $row[$field] = $value instanceof \Stringable ? (string) $value : $value;
             }
             $data[$rowIndex] = $row;
         }
