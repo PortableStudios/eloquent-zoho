@@ -3,7 +3,8 @@
 namespace Portable\EloquentZoho\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Portable\EloquentZoho\Eloquent\Connection;
+use Portable\EloquentZoho\Eloquent\Connection as ZohoConnection;
+use Illuminate\Database\Connection;
 
 class ZohoServiceProvider extends ServiceProvider
 {
@@ -17,12 +18,8 @@ class ZohoServiceProvider extends ServiceProvider
             'eloquent-zoho'
         );
         // Add database driver.
-        $this->app->resolving('db', function ($db) {
-            $db->extend('zoho', function ($config, $name) {
-                $config['name'] = $name;
-
-                return new Connection($config);
-            });
+        Connection::resolverFor('zoho', function ($connection, $database, $prefix, $config) {
+            return new ZohoConnection($config);
         });
     }
 
