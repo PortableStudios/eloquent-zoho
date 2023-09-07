@@ -11,7 +11,6 @@ use Portable\EloquentZoho\ZohoClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Portable\EloquentZoho\Casts\ZohoInteger;
 use Portable\EloquentZoho\Exceptions\NotConnectedException;
 use Portable\EloquentZoho\TokenStorage;
 
@@ -255,34 +254,38 @@ class Connection extends DatabaseConnection
         return $this->client;
     }
 
-    public function getFolderId()
+    public function getFolderId(): ?string
     {
         return $this->getFolders()->where('folderName', $this->folderName)->first();
     }
 
-    public function getFolders()
+    public function getFolders(): Collection
     {
-        if (count($this->folders)==0) {
+        if (count($this->folders) == 0) {
             $response = $this->getClient()->getFolderList();
             if ($response->successful()) {
-                $this->folders = collect($response->json()['response']['result']);
+                /** @var array<int, array> $folders */
+                $folders = $response->json()['response']['result'];
+                $this->folders = collect($folders);
             }
         }
         return $this->folders;
     }
 
-    public function getViews()
+    public function getViews(): Collection
     {
-        if (count($this->views)==0) {
+        if (count($this->views) == 0) {
             $response = $this->getClient()->getViewList();
             if ($response->successful()) {
-                $this->views = collect($response->json()['response']['result']);
+                /** @var array<int, array> $views */
+                $views = $response->json()['response']['result'];
+                $this->views = collect($views);
             }
         }
         return $this->views;
     }
 
-    public function getSchema($name)
+    public function getSchema(string $name): array
     {
         if (isset($this->schemas[$name])) {
             return $this->schemas[$name];
@@ -297,7 +300,9 @@ class Connection extends DatabaseConnection
                     $schema['columnList'][$key] = $item;
                 }
 
-                $schema['columnList'] = collect($schema['columnList']);
+                /** @var array<int, array> $schemaList */
+                $schemaList = $schema['columnList'];
+                $schema['columnList'] = collect($schemaList);
 
                 $this->schemas[$name] = $schema;
             } else {
@@ -307,7 +312,7 @@ class Connection extends DatabaseConnection
         return $schema;
     }
 
-    protected function parseZohoDateFormat($format)
+    protected function parseZohoDateFormat(string $format): string
     {
         $format = str_replace('dd', 'd', $format);
         $format = str_replace('MMM', 'M', $format);
