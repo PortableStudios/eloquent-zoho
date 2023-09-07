@@ -29,6 +29,23 @@ class ZohoClient
         ]);
     }
 
+    public function getFolderList(): Response
+    {
+        $response = $this->post('?ZOHO_ACTION=FOLDERLIST');
+        return $response;
+    }
+
+    public function getViewList(): Response
+    {
+        $response = $this->post('?ZOHO_ACTION=VIEWLIST');
+        return $response;
+    }
+
+    public function getViewInfo(string $table): Response
+    {
+        $response = $this->post($table . '?ZOHO_ACTION=VIEWMETADATA');
+        return $response;
+    }
     /*
     * Determine if the service has enough configuration data to run correctly
     */
