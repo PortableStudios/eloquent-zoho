@@ -9,6 +9,9 @@ use Portable\EloquentZoho\Eloquent\Query\Grammar;
 use Portable\EloquentZoho\Exceptions\ConfigurationException;
 use Portable\EloquentZoho\ZohoClient;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Portable\EloquentZoho\Casts\ZohoInteger;
 use Portable\EloquentZoho\Exceptions\NotConnectedException;
 use Portable\EloquentZoho\TokenStorage;
 
@@ -18,6 +21,10 @@ class Connection extends DatabaseConnection
      * @var ZohoClient
      */
     protected ?ZohoClient $client = null;
+
+    protected Collection $views;
+    protected Collection $folders;
+    protected array $schemas;
 
     protected string $folderName;
 
@@ -30,11 +37,16 @@ class Connection extends DatabaseConnection
             }
         }
 
+        $this->views = collect();
+        $this->folders = collect();
+        $this->schemas = [];
+
         $this->folderName = $zConfig['prefix'];
         $this->useDefaultPostProcessor();
         $this->useDefaultQueryGrammar();
         $this->useDefaultSchemaGrammar();
     }
+
 
     public function setAuthToken(?string $token): void
     {
@@ -94,11 +106,35 @@ class Connection extends DatabaseConnection
 
     public function zohoSelect(string $fromTable, string $query): array
     {
-        $data = $this->getClient()->exportTable($fromTable, $query);
+        $tableSchema = $this->getSchema($fromTable);
+        $dateColumns = $tableSchema['columnList']
+                        ->where('dataTypeName', 'Date')
+                        ->pluck('dateFormat', 'columnName')
+                        ->toArray();
+        $numberColumns = $tableSchema['columnList']
+                        ->whereIn('dataTypeName', ['Auto Number','Number'])
+                        ->pluck('columnName')->toArray();
+
+        $response = $this->getClient()->exportTable($fromTable, $query)['response'];
+        $data = $response['result']['rows'];
+
 
         $rows = [];
-        foreach ($data['response']['result']['rows'] as $row) {
-            $rows[] = array_combine($data['response']['result']['column_order'], $row);
+        foreach ($data as $row) {
+            $row = array_combine($response['result']['column_order'], $row);
+            foreach ($dateColumns as $dateColumn => $dateFormat) {
+                if (isset($row[$dateColumn]) && strlen($row[$dateColumn])) {
+                    $row[$dateColumn] = Carbon::createFromFormat($dateFormat, $row[$dateColumn])->format('Y-m-d H:i:s');
+                }
+            }
+
+            foreach ($numberColumns as $numberColumn) {
+                if (isset($row[$numberColumn]) && strlen($row[$numberColumn])) {
+                    $row[$numberColumn] = (int) Str::replace(',', '', $row[$numberColumn]);
+                }
+            }
+
+            $rows[] = $row;
         }
 
         return $rows;
@@ -217,5 +253,70 @@ class Connection extends DatabaseConnection
         }
 
         return $this->client;
+    }
+
+    public function getFolderId()
+    {
+        return $this->getFolders()->where('folderName', $this->folderName)->first();
+    }
+
+    public function getFolders()
+    {
+        if (count($this->folders)==0) {
+            $response = $this->getClient()->getFolderList();
+            if ($response->successful()) {
+                $this->folders = collect($response->json()['response']['result']);
+            }
+        }
+        return $this->folders;
+    }
+
+    public function getViews()
+    {
+        if (count($this->views)==0) {
+            $response = $this->getClient()->getViewList();
+            if ($response->successful()) {
+                $this->views = collect($response->json()['response']['result']);
+            }
+        }
+        return $this->views;
+    }
+
+    public function getSchema($name)
+    {
+        if (isset($this->schemas[$name])) {
+            return $this->schemas[$name];
+        } else {
+            $response = $this->getClient()->getViewInfo($name);
+            if ($response->successful()) {
+                $schema = $response->json()['response']['result']['viewInfo'];
+                foreach ($schema['columnList'] as $key => $item) {
+                    if (isset($item['dateFormat'])) {
+                        $item['dateFormat'] = $this->parseZohoDateFormat($item['dateFormat']);
+                    }
+                    $schema['columnList'][$key] = $item;
+                }
+
+                $schema['columnList'] = collect($schema['columnList']);
+
+                $this->schemas[$name] = $schema;
+            } else {
+                throw new \Exception("Unable to get schema");
+            }
+        }
+        return $schema;
+    }
+
+    protected function parseZohoDateFormat($format)
+    {
+        $format = str_replace('dd', 'd', $format);
+        $format = str_replace('MMM', 'M', $format);
+        $format = str_replace('yyyy', 'Y', $format);
+
+        $format = str_replace('HH', 'H', $format);
+        $format = str_replace('mm', 'i', $format);
+        $format = str_replace('ss', 's', $format);
+
+        return $format;
     }
 }
