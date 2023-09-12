@@ -44,6 +44,7 @@ class Connection extends DatabaseConnection
         $this->useDefaultPostProcessor();
         $this->useDefaultQueryGrammar();
         $this->useDefaultSchemaGrammar();
+        $this->config = $zConfig;
     }
 
 
