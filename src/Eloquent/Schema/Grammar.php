@@ -31,6 +31,7 @@ class Grammar extends BaseGrammar
 
         switch ($column['type']) {
             case 'bigInteger':
+            case 'integer':
                 return 'NUMBER';
             case 'email':
                 return 'EMAIL';
