@@ -2,7 +2,6 @@
 
 namespace Portable\EloquentZoho\TokenStorage;
 
-use Illuminate\Support\Facades\Cache as FacadesCache;
 use Illuminate\Support\Facades\Storage;
 use Portable\EloquentZoho\Contracts\TokenStorageInterface;
 

@@ -12,7 +12,6 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Portable\EloquentZoho\Exceptions\NotConnectedException;
-use Portable\EloquentZoho\TokenStorage;
 
 class Connection extends DatabaseConnection
 {

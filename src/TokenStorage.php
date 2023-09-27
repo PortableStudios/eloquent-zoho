@@ -2,6 +2,8 @@
 
 namespace Portable\EloquentZoho;
 
+use Portable\EloquentZoho\Contracts\TokenStorageInterface;
+
 class TokenStorage
 {
     protected mixed $driver = null;
@@ -10,7 +12,7 @@ class TokenStorage
         'file' => TokenStorage\File::class,
     ];
 
-    public function registerTokenDriver(string $alias, string $class)
+    public function registerTokenDriver(string $alias, string $class): void
     {
         $this->drivers[$alias] = $class;
     }
@@ -25,7 +27,7 @@ class TokenStorage
         $this->getDriver()->set($token);
     }
 
-    protected function getDriver()
+    protected function getDriver(): TokenStorageInterface
     {
         if (!$this->driver) {
             if (!isset($this->drivers[config('eloquent-zoho.token_driver')])) {
