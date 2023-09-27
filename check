@@ -33,7 +33,7 @@ else
     ask_run 'More information available with' './vendor/bin/phpstan analyse'
 fi
 
-ask_run 'Unit test suite available with' 'php artisan test'
+ask_run 'Unit test suite available with' 'vendor/bin/phpunit'
 
 echo '=================='
 echo 'Everything Complete'

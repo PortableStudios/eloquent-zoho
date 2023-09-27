@@ -12,7 +12,6 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Portable\EloquentZoho\Exceptions\NotConnectedException;
-use Portable\EloquentZoho\TokenStorage;
 
 class Connection extends DatabaseConnection
 {
@@ -240,10 +239,10 @@ class Connection extends DatabaseConnection
         // to generate an auth token.
         if ($this->client->configured() && !$this->client->connected()) {
             // Do we have a cached token?
-            $token = TokenStorage::get();
+            $token = app('eloquent-zoho.token-storage')->get();
             if (!$token) {
                 $token = $this->client->generateAuthToken($this->zConfig['email'], $this->zConfig['password']);
-                TokenStorage::set($token);
+                app('eloquent-zoho.token-storage')->set($token);
             }
             $this->client->setAuthToken($token);
         }

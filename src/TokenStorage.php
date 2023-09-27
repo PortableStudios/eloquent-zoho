@@ -2,26 +2,42 @@
 
 namespace Portable\EloquentZoho;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use Portable\EloquentZoho\Contracts\TokenStorageInterface;
 
 class TokenStorage
 {
-    public static function get(): ?string
+    protected mixed $driver = null;
+    protected array $drivers = [
+        'cache' => TokenStorage\Cache::class,
+        'file' => TokenStorage\File::class,
+    ];
+
+    public function registerTokenDriver(string $alias, string $class): void
     {
-        return match (config('eloquent-zoho.token_driver')) {
-            'cache' => Cache::get('zoho_token'),
-            'file' => Storage::get(config('eloquent-zoho.token_file')),
-            default => throw new \Exception('Invalid token driver')
-        };
+        $this->drivers[$alias] = $class;
     }
 
-    public static function set(string $token): void
+    public function get(): ?string
     {
-        match (config('eloquent-zoho.token_driver')) {
-            'cache' => Cache::forever('zoho_token', $token),
-            'file' => Storage::put(config('eloquent-zoho.token_file'), $token),
-            default => throw new \Exception('Invalid token driver')
-        };
+        return $this->getDriver()->get();
+    }
+
+    public function set(string $token): void
+    {
+        $this->getDriver()->set($token);
+    }
+
+    protected function getDriver(): TokenStorageInterface
+    {
+        if (!$this->driver) {
+            if (!isset($this->drivers[config('eloquent-zoho.token_driver')])) {
+                throw new \Exception('Invalid token driver ' . config('eloquent-zoho.token_driver'));
+            }
+
+            $driverClass = $this->drivers[config('eloquent-zoho.token_driver')];
+            $this->driver = new $driverClass();
+        }
+
+        return $this->driver;
     }
 }
